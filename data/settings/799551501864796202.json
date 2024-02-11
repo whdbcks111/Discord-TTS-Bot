@@ -1,0 +1,50 @@
+{
+    "defaultGender": "female",
+    "defaultLanguage": "auto",
+    "defaultPitch": 1,
+    "defaultSpeed": 1,
+    "userSettings": {
+        "415924464241606697": {
+            "gender": "female",
+            "language": "ja",
+            "pitch": 1,
+            "speed": 1
+        },
+        "705760999525056552": {
+            "gender": "female",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        },
+        "1205611394238513292": {
+            "gender": "female",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        },
+        "802025568241582120": {
+            "gender": "female",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        },
+        "1133788989304873073": {
+            "gender": "female",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        },
+        "479108435984515072": {
+            "gender": "female",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        },
+        "871309082588495903": {
+            "gender": "female",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        }
+    }
+}

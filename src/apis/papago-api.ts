@@ -25,10 +25,22 @@ const SPEACKER_MAP: { [key: string]: string } = {
     'de_female': 'lena',
     'ru_male': 'aleksei',
     'ru_female': 'vera',
-}
+};
+
+export const languageCodes: [string, string][] = [
+    ['auto', '자동'], 
+    ['ko', '한국어'], 
+    ['en', '영어'], 
+    ['ja', '일본어'], 
+    ['zh-tw', '중국어(번체)'], 
+    ['zh-cn', '중국어(간체)'], 
+    ['es', '스페인어'], 
+    ['fr', '프랑스어'], 
+    ['de', '독일어'], 
+    ['ru', '러시아어']
+];
 
 export type Gender = 'male' | 'female';
-export type LanguageCode = 'ko' | 'en' | 'ja' | 'zh-tw' | 'zh-cn' | 'es' | 'fr' | 'de' | 'ru';
 
 function clamp(x: number, min: number, max: number) {
     if(min > max) return clamp(x, max, min);
@@ -62,21 +74,31 @@ export async function detectLanguage(query: string) {
             'Authorization': authorization,
             'Timestamp': timestamp
         } 
-    })).data;
-    return String(data.langCode) as LanguageCode;
+    }).catch(_ => ({ data: '' }))).data;
+    return String(data.langCode);
 }
 
-export async function createTTS(text: string, lang: LanguageCode | 'auto' = 'auto', gender: Gender = 'female', alpha = 1, pitch = 1, speed = 1) {
+export function convertTTSMessage(msg: string) {
+
+    msg = msg.replace(/ㅋ{4,}/g, str => {
+        return '크'.repeat(str.length);
+    });
+
+    return msg;
+}
+
+export async function createTTS(text: string, lang: string = 'auto', gender: Gender = 'female', alpha = 1, pitch = 1, speed = 1) {
     const timestamp = Date.now();
     const authorization = await getAutorization(URL_MAKE_ID, timestamp);
 
+    if(languageCodes.every(codes => codes[0] !== lang)) lang = 'auto';
     if(lang == 'auto') lang = await detectLanguage(text);
 
     const params = new URLSearchParams({
         alpha: remap(clamp(alpha, 0, 2) / 2, 5, -5).toFixed(0),
         pitch: remap(clamp(pitch, 0, 2) / 2, 5, -5).toFixed(0),
         speed: remap(clamp(speed, 0, 2) / 2, 5, -5).toFixed(0),
-        speaker: SPEACKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ?? SPEACKER_MAP['ko-female'],
+        speaker: SPEACKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ?? SPEACKER_MAP['es_' + gender.toLowerCase()],
         text
     });
 
@@ -85,6 +107,6 @@ export async function createTTS(text: string, lang: LanguageCode | 'auto' = 'aut
             'Authorization': authorization,
             'Timestamp': timestamp
         } 
-    })).data;
+    }).catch(_ => ({ data: '' }))).data;
     return URL_TTS + data.id;
 }
