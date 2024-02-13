@@ -1,5 +1,8 @@
 import { createHmac, randomUUID } from 'crypto';
 import axios from 'axios';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { calculate } from './calculator';
 
 const URL_SECRET = 'https://papago.naver.com/main.6b997394aeac2d5eb831.chunk.js';
 const URL_MAKE_ID = 'https://papago.naver.com/apis/tts/makeID/';
@@ -26,6 +29,10 @@ const SPEACKER_MAP: { [key: string]: string } = {
     'ru_male': 'aleksei',
     'ru_female': 'vera',
 };
+
+type MacroList = ({ regex: string, replaceValue: string })[];
+
+const MACRO_LIST: MacroList = JSON.parse(readFileSync(path.join(__dirname, '../../data/macro.json')).toString());
 
 export const languageCodes: [string, string][] = [
     ['auto', '자동'], 
@@ -75,14 +82,29 @@ export async function detectLanguage(query: string) {
             'Timestamp': timestamp
         } 
     }).catch(_ => ({ data: '' }))).data;
-    return String(data.langCode);
+
+    let langCode = String(data.langCode);
+    if(!languageCodes.some(code => code[0] === langCode)) {
+        langCode = (query.match(/[가-힣ㄱ-ㅎㅏ-ㅣ]/g)?.length ?? 0) >= (query.match(/[a-zA-Z]/g)?.length ?? 0) ? 'ko' : 'es';
+    }
+
+    return langCode;
 }
 
 export function convertTTSMessage(msg: string) {
 
-    msg = msg.replace(/ㅋ{4,}/g, str => {
-        return '크'.repeat(str.length);
-    });
+    for(let macro of MACRO_LIST) {
+        msg = msg.replace(new RegExp(macro.regex, 'g'), target => {
+            let result = macro.replaceValue
+                .replace(/\{[^{}]+\}/g, str => calculate(
+                    str.slice(1, -1).replace(/length/g, target.length.toString())
+                    ).toString());
+            result = result.replace(/\([^()]+\)\*\d+/g, str => str.slice(1).split(')')[0]
+                .repeat(Number(str.split(')*')[1]))
+                );
+            return result;
+        });
+    }
 
     return msg;
 }
@@ -98,7 +120,8 @@ export async function createTTS(text: string, lang: string = 'auto', gender: Gen
         alpha: remap(clamp(alpha, 0, 2) / 2, 5, -5).toFixed(0),
         pitch: remap(clamp(pitch, 0, 2) / 2, 5, -5).toFixed(0),
         speed: remap(clamp(speed, 0, 2) / 2, 5, -5).toFixed(0),
-        speaker: SPEACKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ?? SPEACKER_MAP['es_' + gender.toLowerCase()],
+        speaker: SPEACKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ?? 
+            SPEACKER_MAP['ko_' + gender.toLowerCase()],
         text
     });
 
@@ -107,6 +130,6 @@ export async function createTTS(text: string, lang: string = 'auto', gender: Gen
             'Authorization': authorization,
             'Timestamp': timestamp
         } 
-    }).catch(_ => ({ data: '' }))).data;
+    }).catch(_ => ({ data: { id: '' } }))).data;
     return URL_TTS + data.id;
 }

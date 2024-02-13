@@ -1,0 +1,198 @@
+[
+    {
+        "regex": "ㅎㅇ",
+        "replaceValue": "하이"
+    },
+    {
+        "regex": "ㅇㅋㅇ",
+        "replaceValue": "오케이"
+    },
+    {
+        "regex": "ㅇㅋ",
+        "replaceValue": "오키"
+    },
+    {
+        "regex": "ㅎ{2,}",
+        "replaceValue": "(히)*{length}"
+    },
+    {
+        "regex": "[ㅈㅉ]{3,}",
+        "replaceValue": "쯔(즈)*{length-1}"
+    },
+    {
+        "regex": "ㄹㅇ",
+        "replaceValue": "레알"
+    },
+    {
+        "regex": "ㄲㅂ",
+        "replaceValue": "까비"
+    },
+    {
+        "regex": "ㄳ|ㄱㅅ",
+        "replaceValue": "감사"
+    },
+    {
+        "regex": "ㅂㅇ",
+        "replaceValue": "바이"
+    },
+    {
+        "regex": "ㅂㅂ",
+        "replaceValue": "빠빠이"
+    },
+    {
+        "regex": "ㅉㅈ",
+        "replaceValue": "쯔즈"
+    },
+    {
+        "regex": "ㅉㅉ",
+        "replaceValue": "쯧쯧"
+    },
+    {
+        "regex": "ㅇㅎ",
+        "replaceValue": "아하!"
+    },
+    {
+        "regex": "ㅇㅈ",
+        "replaceValue": "인정"
+    },
+    {
+        "regex": "ㅖ",
+        "replaceValue": "예"
+    },
+    {
+        "regex": "ㅔ",
+        "replaceValue": "에"
+    },
+    {
+        "regex": "ㅏ",
+        "replaceValue": "아"
+    },
+    {
+        "regex": "ㄱㅇㅇ",
+        "replaceValue": "귀여워"
+    },
+    {
+        "regex": "ㅅㄹ",
+        "replaceValue": "싫어"
+    },
+    {
+        "regex": "ㅈㅅ",
+        "replaceValue": "죄송"
+    },
+    {
+        "regex": "^[?]",
+        "replaceValue": "잉?"
+    },
+    {
+        "regex": "[()]",
+        "replaceValue": " "
+    },
+    {
+        "regex": "ㅅㅂ",
+        "replaceValue": "시발"
+    },
+    {
+        "regex": "ㅆㅂ",
+        "replaceValue": "씨발"
+    },
+    {
+        "regex": "ㅄ|ㅂㅅ",
+        "replaceValue": "병신"
+    },
+    {
+        "regex": "ㅇㅈㄹ",
+        "replaceValue": "이지랄"
+    },
+    {
+        "regex": "ㅈㄹ",
+        "replaceValue": "지랄"
+    },
+    {
+        "regex": "ㅅㅅ",
+        "replaceValue": "히히"
+    },
+    {
+        "regex": "ㄳㄲ|ㄱㅅㄲ",
+        "replaceValue": "개새끼"
+    },
+    {
+        "regex": "ㅈ같",
+        "replaceValue": "좆같"
+    },
+    {
+        "regex": "ㄷ{2,}",
+        "replaceValue": "(덜)*{length}"
+    },
+    {
+        "regex": "ㅋ{2,}",
+        "replaceValue": "(크)*{length}"
+    },
+    {
+        "regex": "ㅌ{2,}",
+        "replaceValue": "(튀)*{length}"
+    },
+    {
+        "regex": "ㄱ{2,}",
+        "replaceValue": "(고)*{length}"
+    },
+    {
+        "regex": "ㄲ{1,}",
+        "replaceValue": "(고고)*{length}"
+    },
+    {
+        "regex": "ㄱ",
+        "replaceValue": "기역"
+    },
+    {
+        "regex": "ㄴ",
+        "replaceValue": "니은"
+    },
+    {
+        "regex": "ㄷ",
+        "replaceValue": "디귿"
+    },
+    {
+        "regex": "ㄹ",
+        "replaceValue": "리을"
+    },
+    {
+        "regex": "ㅁ",
+        "replaceValue": "미음"
+    },
+    {
+        "regex": "ㅂ",
+        "replaceValue": "비읍"
+    },
+    {
+        "regex": "ㅅ",
+        "replaceValue": "시옷"
+    },
+    {
+        "regex": "ㅇ",
+        "replaceValue": "이응"
+    },
+    {
+        "regex": "ㅈ",
+        "replaceValue": "지읒"
+    },
+    {
+        "regex": "ㅊ",
+        "replaceValue": "치읓"
+    },
+    {
+        "regex": "ㅋ",
+        "replaceValue": "키읔"
+    },
+    {
+        "regex": "ㅌ",
+        "replaceValue": "티긑"
+    },
+    {
+        "regex": "ㅍ",
+        "replaceValue": "피읖"
+    },
+    {
+        "regex": "ㅎ",
+        "replaceValue": "히읗"
+    }
+]

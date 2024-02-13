@@ -25,6 +25,14 @@ client.on('ready', async () => {
     }
 });
 
+client.on('voiceStateUpdate', (oldState, newState) => {
+    if(oldState.channel && oldState.channel.members.size === 1 && 
+        oldState.channel.members.first()!!.user.id === client.user?.id) {
+        const voiceConn = getVoiceConnection(oldState.guild.id);
+        if(voiceConn) voiceConn.disconnect();
+    }
+});
+
 client.on('messageCreate', async (msg) => {
     const voiceConn = getVoiceConnection(msg.guildId ?? '');
 
@@ -36,13 +44,18 @@ client.on('messageCreate', async (msg) => {
 
     if(msg.member && voiceConn) {
         const info = ttsConnectionInfo[msg.guildId ?? ''];
-        if(msg.channelId === info?.textChannelId && msg.member.voice.channelId === info.voiceChannelId) {
+        if(!info) {
+            voiceConn.disconnect();
+        }
+        else if(msg.channelId === info.textChannelId && msg.member.voice.channelId === info.voiceChannelId) {
             if(!(msg.member.user.id in info.settings.userSettings)) {
                 info.settings.userSettings[msg.member.user.id] = createDefaultTTSUserSettings(info.settings);
             }
             const userSetting = info.settings.userSettings[msg.member.user.id];
             const url = await createTTS(convertTTSMessage(msg.cleanContent), userSetting.language, userSetting.gender, 1, userSetting.pitch, userSetting.speed);
 
+            console.log(`TTS URL Created : ${url}\n` + 
+                `Queue Length : ${info.ttsURLQueue.length}`);
             info.ttsURLQueue.push(url);
 
             if(info.ttsURLQueue.length === 1) {
@@ -53,7 +66,8 @@ client.on('messageCreate', async (msg) => {
                 voiceConn.subscribe(player);
 
                 player.on('stateChange', (oldState, newState) => {
-                    if(newState.status === AudioPlayerStatus.Idle) {
+                    if(newState.status !== AudioPlayerStatus.Playing && 
+                        newState.status !== AudioPlayerStatus.Buffering) {
                         info.ttsURLQueue.shift();
                         if(info.ttsURLQueue.length > 0) {
                             const next = createAudioResource(info.ttsURLQueue[0] ?? '');
@@ -75,6 +89,14 @@ client.on('interactionCreate', async (interaction) => {
             currentCommand.execute(client, interaction);
         }
     }
+});
+
+client.on('shardError', e => {
+    console.error(e);
+});
+
+client.on('error', e => {
+    console.error(e);
 });
 
 setInterval(async () => {

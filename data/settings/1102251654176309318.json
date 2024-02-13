@@ -13,7 +13,7 @@
         "415924464241606697": {
             "gender": "male",
             "language": "auto",
-            "pitch": 0,
+            "pitch": 1,
             "speed": 1
         },
         "684796652170510403": {
@@ -77,6 +77,12 @@
             "speed": 1
         },
         "431364640543604737": {
+            "gender": "male",
+            "language": "auto",
+            "pitch": 1,
+            "speed": 1
+        },
+        "298809854036934658": {
             "gender": "female",
             "language": "auto",
             "pitch": 1,
