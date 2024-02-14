@@ -1,4 +1,4 @@
-import { GuildMember, TextChannel } from 'discord.js';
+import { Colors, EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
 import { initGuildConnectionInfo, ttsConnectionInfo } from '../core';
 import { SlashCommand } from '../types/slashCommand';
 import { joinVoiceChannel } from '@discordjs/voice';
@@ -15,13 +15,36 @@ export const joinCommand: SlashCommand = {
         
         const voiceChannel = interaction.member.voice.channel;
 
-        if(!voiceChannel) {
-            await interaction.followUp(`연결된 음성 채널이 없습니다.`);
+        if(!(interaction.channel instanceof TextChannel)) {
+            await interaction.followUp({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription(`**이 명령어는 채팅 채널에서만 사용할 수 있습니다.**`)
+                        .setColor(Colors.Red)
+                ]
+            });
             return;
         }
 
-        if(!(interaction.channel instanceof TextChannel)) {
-            await interaction.followUp(`채팅 채널에서만 사용할 수 있습니다.`);
+        if(!voiceChannel) {
+            await interaction.followUp({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription(`**:mute: 연결된 음성 채널이 없습니다.**`)
+                        .setColor(Colors.Red)
+                ]
+            });
+            return;
+        }
+
+        if(!voiceChannel.joinable) {
+            await interaction.followUp({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription(`**:no_entry: 해당 음성 채널에 들어갈 권한이 없어 채널에 입장할 수 없습니다.**`)
+                        .setColor(Colors.Red)
+                ]
+            });
             return;
         }
 
@@ -41,7 +64,13 @@ export const joinCommand: SlashCommand = {
         info.textChannelId = textChannel.id;
         info.voiceChannelId = voiceChannel.id;
 
-        await interaction.followUp(`음성 채널 [${voiceChannel.name}]에 입장합니다.\n` + 
-                `이제부터 채팅 채널 [${textChannel.name}]의 메시지를 읽을게요!`);
+        await interaction.followUp({
+            embeds: [
+                new EmbedBuilder()
+                    .setDescription(`**음성 채널 [:loudspeaker:${voiceChannel.name}]에 입장합니다.**\n` +
+                        `이제부터 채팅 채널 \`#${textChannel.name}\`의 메시지를 읽을게요!`)
+                    .setColor(Colors.Aqua)
+            ]
+        });
     }
 };

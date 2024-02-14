@@ -25,7 +25,8 @@ export function createDefaultTTSSettings(): TTSSettings {
         defaultLanguage: 'auto',
         defaultPitch: 1,
         defaultSpeed: 1,
-        userSettings: {}
+        userSettings: {},
+        privateChannelIds: []
     };
 }
 
@@ -47,9 +48,12 @@ export async function loadTTSSettings(guildId: string) {
     const json = (await readFile(filePath)).toString();
 
     try {
-        settings = JSON.parse(json) as TTSSettings
+        let savedSettings = JSON.parse(json) as TTSSettings;
+        settings = savedSettings;
     }
-    catch(_) {}
+    catch(e) {
+        console.error(e);
+    }
 
     return settings;
 }

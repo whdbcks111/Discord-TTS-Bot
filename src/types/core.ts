@@ -21,6 +21,7 @@ export type TTSSettings = {
     userSettings: {
         [key: string]: TTSUserSettings
     },
+    privateChannelIds: string[]
     defaultGender: Gender
     defaultPitch: number,
     defaultSpeed: number,

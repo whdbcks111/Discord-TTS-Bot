@@ -1,7 +1,7 @@
 import { joinCommand } from "./join";
 import { leaveCommand } from "./leave";
-import { setGenderCommand, setLanguageCommand, setPitchCommand, setSpeedCommand } from "./settings";
+import { togglePrivateChannelCommand, setGenderCommand, setLanguageCommand, setPitchCommand, setSpeedCommand, seePrivateChannelsCommand } from "./settings";
 
-const availableCommands = [ joinCommand, leaveCommand, setGenderCommand, setLanguageCommand, setPitchCommand, setSpeedCommand ]
+const availableCommands = [ joinCommand, leaveCommand, setGenderCommand, setLanguageCommand, setPitchCommand, setSpeedCommand, togglePrivateChannelCommand, seePrivateChannelsCommand ]
 
 export default availableCommands;

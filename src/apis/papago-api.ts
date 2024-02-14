@@ -30,7 +30,7 @@ const SPEACKER_MAP: { [key: string]: string } = {
     'ru_female': 'vera',
 };
 
-type MacroList = ({ regex: string, replaceValue: string })[];
+type MacroList = ({ regex: string, replaceValue: string, lang?: string })[];
 
 const MACRO_LIST: MacroList = JSON.parse(readFileSync(path.join(__dirname, '../../data/macro.json')).toString());
 
@@ -91,9 +91,10 @@ export async function detectLanguage(query: string) {
     return langCode;
 }
 
-export function convertTTSMessage(msg: string) {
+export function convertTTSMessage(msg: string, langCode: string) {
 
     for(let macro of MACRO_LIST) {
+        if(macro.lang && macro.lang != langCode) continue; 
         msg = msg.replace(new RegExp(macro.regex, 'g'), target => {
             let result = macro.replaceValue
                 .replace(/\{[^{}]+\}/g, str => calculate(
@@ -115,6 +116,8 @@ export async function createTTS(text: string, lang: string = 'auto', gender: Gen
 
     if(languageCodes.every(codes => codes[0] !== lang)) lang = 'auto';
     if(lang == 'auto') lang = await detectLanguage(text);
+
+    text = convertTTSMessage(text, lang);
 
     const params = new URLSearchParams({
         alpha: remap(clamp(alpha, 0, 2) / 2, 5, -5).toFixed(0),

@@ -4,8 +4,16 @@
         "replaceValue": "하이"
     },
     {
+        "regex": "ㄹㅇ",
+        "replaceValue": "레알"
+    },
+    {
         "regex": "ㅇㅋㅇ",
         "replaceValue": "오케이"
+    },
+    {
+        "regex": "ㅇㄱㅇ",
+        "replaceValue": "오게이"
     },
     {
         "regex": "ㅇㅋ",
@@ -16,12 +24,12 @@
         "replaceValue": "(히)*{length}"
     },
     {
-        "regex": "[ㅈㅉ]{3,}",
-        "replaceValue": "쯔(즈)*{length-1}"
+        "regex": "[ㅈ]{3,}",
+        "replaceValue": "(즈)*{length}"
     },
     {
-        "regex": "ㄹㅇ",
-        "replaceValue": "레알"
+        "regex": "ㅈㅈ",
+        "replaceValue": "쥐쥐"
     },
     {
         "regex": "ㄲㅂ",
@@ -32,6 +40,10 @@
         "replaceValue": "감사"
     },
     {
+        "regex": "ㄱㄷ",
+        "replaceValue": "기달"
+    },
+    {
         "regex": "ㅂㅇ",
         "replaceValue": "바이"
     },
@@ -40,12 +52,33 @@
         "replaceValue": "빠빠이"
     },
     {
+        "lang": "ko",
+        "regex": "@",
+        "replaceValue": "골뱅이"
+    },
+    {
         "regex": "ㅉㅈ",
         "replaceValue": "쯔즈"
     },
     {
         "regex": "ㅉㅉ",
         "replaceValue": "쯧쯧"
+    },
+    {
+        "regex": "ㅅㄱ",
+        "replaceValue": "수고"
+    },
+    {
+        "regex": "ㄴㅇㅅ",
+        "replaceValue": "나이스"
+    },
+    {
+        "regex": "ㅁㅊ",
+        "replaceValue": "미친"
+    },
+    {
+        "regex": "ㅗ",
+        "replaceValue": "엿"
     },
     {
         "regex": "ㅇㅎ",

@@ -1,5 +1,5 @@
 import dotenv from 'dotenv'
-import { convertTTSMessage, createTTS } from './apis/papago-api';
+import { convertTTSMessage, createTTS, languageCodes } from './apis/papago-api';
 import { Client, GatewayIntentBits } from 'discord.js'
 import commands from './commands'
 import { AudioPlayerStatus, createAudioPlayer, createAudioResource, getVoiceConnection } from '@discordjs/voice';
@@ -42,20 +42,34 @@ client.on('messageCreate', async (msg) => {
         msg.reply('재설정 완료')
     }
 
-    if(msg.member && voiceConn) {
+    if(msg.member && !msg.member.user.bot && voiceConn) {
         const info = ttsConnectionInfo[msg.guildId ?? ''];
         if(!info) {
             voiceConn.disconnect();
         }
-        else if(msg.channelId === info.textChannelId && msg.member.voice.channelId === info.voiceChannelId) {
+        else if((msg.channelId === info.textChannelId || info.settings.privateChannelIds.includes(msg.channelId)) && msg.member.voice.channelId === info.voiceChannelId) {
             if(!(msg.member.user.id in info.settings.userSettings)) {
                 info.settings.userSettings[msg.member.user.id] = createDefaultTTSUserSettings(info.settings);
             }
             const userSetting = info.settings.userSettings[msg.member.user.id];
-            const url = await createTTS(convertTTSMessage(msg.cleanContent), userSetting.language, userSetting.gender, 1, userSetting.pitch, userSetting.speed);
+            const linkPattern = /(https?:\/\/[^ ]+)/g;
+            let langCode = userSetting.language;
+            let content = msg.cleanContent.replace(linkPattern, 'Link');
+            let languageApplied = false;
+            for(let codes of languageCodes) {
+                for(let code of codes) {
+                    const keyword = `(${code})`;
+                    if(content.startsWith(keyword)) {
+                        langCode = codes[0];
+                        content = content.slice(keyword.length);
+                        languageApplied = true;
+                        break;
+                    }
+                }
+                if(languageApplied) break;
+            }
+            const url = await createTTS(content, langCode, userSetting.gender, 1, userSetting.pitch, userSetting.speed);
 
-            console.log(`TTS URL Created : ${url}\n` + 
-                `Queue Length : ${info.ttsURLQueue.length}`);
             info.ttsURLQueue.push(url);
 
             if(info.ttsURLQueue.length === 1) {
