@@ -1,10 +1,12 @@
-import { TTSConnectionInfo, TTSSettings, TTSUserSettings } from './types/core';
+import { TTSConnectionMap, TTSSettings, TTSUserSettings, TTSConnection, TTSCache } from './types/core';
 import path from 'path';
 import { mkdir, readFile, stat, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
-import { Gender } from './apis/papago-api';
+import { Gender, createTTS, languageCodes } from './apis/papago-api';
+import { AudioPlayerStatus, VoiceConnection, createAudioPlayer, createAudioResource } from '@discordjs/voice';
 
-export const ttsConnectionInfo: TTSConnectionInfo = {};
+export const ttsCache: TTSCache = {};
+export const ttsConnectionInfo: TTSConnectionMap = {};
 
 export async function initGuildConnectionInfo(guildId: string) {
     return ttsConnectionInfo[guildId] = {
@@ -75,4 +77,74 @@ export async function saveAllTTSSettings() {
         promises.push(saveTTSSettings(guildId));
     }
     await Promise.all(promises);
+}
+
+export async function getTTS(text: string, langCode: string, gender: Gender, pitch: number, speed: number) {
+    const cacheKey = `${langCode}/${gender}/${pitch.toFixed(1)}/${speed.toFixed(1)}/${text}`;
+
+    if(cacheKey in ttsCache) {
+        let cached = ttsCache[cacheKey];
+
+        if(Date.now() - cached.createdAt > 1000 * 60 * 60 * 24) {
+            delete ttsCache[cacheKey];
+        }
+        else {
+            return cached.url;
+        }
+    }
+
+    let ttsURL = await createTTS(text, langCode, gender, 1, pitch, speed);
+    ttsCache[cacheKey] = {
+        url: ttsURL,
+        createdAt: Date.now()
+    }
+
+    return ttsURL;
+}
+
+export async function enqueueTTS(text: string, voiceConn: VoiceConnection, info: TTSConnection, userSetting: TTSUserSettings) {
+    const linkPattern = /(https?:\/\/[^ ]+)/g;
+    let langCode = userSetting.language;
+    let content = text.replace(linkPattern, 'Link');
+    let languageApplied = false;
+    for(let codes of languageCodes) {
+        for(let code of codes) {
+            const keyword = `(${code})`;
+            if(content.startsWith(keyword)) {
+                langCode = codes[0];
+                content = content.slice(keyword.length);
+                languageApplied = true;
+                break;
+            }
+        }
+        if(languageApplied) break;
+    }
+
+    const gender = userSetting.gender;
+    const pitch = userSetting.pitch;
+    const speed = userSetting.speed;
+
+    const url = await getTTS(content, langCode, gender, pitch, speed);
+    console.log(`TTS created: ${content}, ${url}`);
+
+    info.ttsURLQueue.push(url);
+
+    if(info.ttsURLQueue.length === 1) {
+        const resource = createAudioResource(info.ttsURLQueue[0]);
+        const player = createAudioPlayer();
+
+        player.play(resource);
+        voiceConn.subscribe(player);
+
+        player.on('stateChange', (oldState, newState) => {
+            if(newState.status !== AudioPlayerStatus.Playing && 
+                newState.status !== AudioPlayerStatus.Buffering) {
+                info.ttsURLQueue.shift();
+                if(info.ttsURLQueue.length > 0) {
+                    const next = createAudioResource(info.ttsURLQueue[0] ?? '');
+                    player.play(next);
+                }
+            }
+        });
+    }
 }

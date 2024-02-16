@@ -4,6 +4,20 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { calculate } from './calculator';
 
+const USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/11.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+]
+
 const URL_SECRET = 'https://papago.naver.com/main.6b997394aeac2d5eb831.chunk.js';
 const URL_MAKE_ID = 'https://papago.naver.com/apis/tts/makeID/';
 const URL_TTS = 'https://papago.naver.com/apis/tts/';
@@ -79,7 +93,8 @@ export async function detectLanguage(query: string) {
     const data = (await axios.post(URL_DETECT_LANG, new URLSearchParams({ query }), { 
         headers: {
             'Authorization': authorization,
-            'Timestamp': timestamp
+            'Timestamp': timestamp,
+            'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
         } 
     }).catch(_ => ({ data: '' }))).data;
 
@@ -131,8 +146,10 @@ export async function createTTS(text: string, lang: string = 'auto', gender: Gen
     const data = (await axios.post(URL_MAKE_ID, params, { 
         headers: {
             'Authorization': authorization,
-            'Timestamp': timestamp
-        } 
+            'Timestamp': timestamp,
+            'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
+        },
+        timeout: 5000
     }).catch(_ => ({ data: { id: '' } }))).data;
     return URL_TTS + data.id;
 }

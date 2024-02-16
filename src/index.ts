@@ -1,9 +1,8 @@
 import dotenv from 'dotenv'
-import { convertTTSMessage, createTTS, languageCodes } from './apis/papago-api';
 import { Client, GatewayIntentBits } from 'discord.js'
 import commands from './commands'
-import { AudioPlayerStatus, createAudioPlayer, createAudioResource, getVoiceConnection } from '@discordjs/voice';
-import { createDefaultTTSUserSettings, saveAllTTSSettings, ttsConnectionInfo } from './core';
+import { createAudioResource, getVoiceConnection } from '@discordjs/voice';
+import { createDefaultTTSUserSettings, enqueueTTS, saveAllTTSSettings, ttsConnectionInfo } from './core';
 
 dotenv.config();
 
@@ -42,54 +41,25 @@ client.on('messageCreate', async (msg) => {
         msg.reply('재설정 완료')
     }
 
+    if(msg.content.startsWith('!playdur ')) {
+        
+        const resource = createAudioResource(msg.content.slice('!playdur '.length));
+        msg.reply(`dur ${resource.playbackDuration}\n` + 
+            `readable len ${resource.playStream.readableLength}`);
+    }
+
     if(msg.member && !msg.member.user.bot && voiceConn) {
         const info = ttsConnectionInfo[msg.guildId ?? ''];
         if(!info) {
             voiceConn.disconnect();
         }
-        else if((msg.channelId === info.textChannelId || info.settings.privateChannelIds.includes(msg.channelId)) && msg.member.voice.channelId === info.voiceChannelId) {
+        else if((msg.channelId === info.textChannelId || info.settings.privateChannelIds.includes(msg.channelId)) && 
+            msg.member.voice.channelId === info.voiceChannelId) {
             if(!(msg.member.user.id in info.settings.userSettings)) {
                 info.settings.userSettings[msg.member.user.id] = createDefaultTTSUserSettings(info.settings);
             }
             const userSetting = info.settings.userSettings[msg.member.user.id];
-            const linkPattern = /(https?:\/\/[^ ]+)/g;
-            let langCode = userSetting.language;
-            let content = msg.cleanContent.replace(linkPattern, 'Link');
-            let languageApplied = false;
-            for(let codes of languageCodes) {
-                for(let code of codes) {
-                    const keyword = `(${code})`;
-                    if(content.startsWith(keyword)) {
-                        langCode = codes[0];
-                        content = content.slice(keyword.length);
-                        languageApplied = true;
-                        break;
-                    }
-                }
-                if(languageApplied) break;
-            }
-            const url = await createTTS(content, langCode, userSetting.gender, 1, userSetting.pitch, userSetting.speed);
-
-            info.ttsURLQueue.push(url);
-
-            if(info.ttsURLQueue.length === 1) {
-                const resource = createAudioResource(url);
-                const player = createAudioPlayer();
-                
-                player.play(resource);
-                voiceConn.subscribe(player);
-
-                player.on('stateChange', (oldState, newState) => {
-                    if(newState.status !== AudioPlayerStatus.Playing && 
-                        newState.status !== AudioPlayerStatus.Buffering) {
-                        info.ttsURLQueue.shift();
-                        if(info.ttsURLQueue.length > 0) {
-                            const next = createAudioResource(info.ttsURLQueue[0] ?? '');
-                            player.play(next);
-                        }
-                    } 
-                });
-            }
+            enqueueTTS(msg.cleanContent, voiceConn, info, userSetting);
         }
     }
 });
