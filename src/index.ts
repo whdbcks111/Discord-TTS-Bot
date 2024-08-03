@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import { Client, GatewayIntentBits } from 'discord.js'
 import commands from './commands'
-import { createAudioResource, getVoiceConnection } from '@discordjs/voice';
+import { VoiceConnectionStatus, createAudioResource, getVoiceConnection } from '@discordjs/voice';
 import { createDefaultTTSUserSettings, enqueueTTS, saveAllTTSSettings, ttsConnectionInfo } from './core';
 
 dotenv.config();
@@ -38,14 +38,7 @@ client.on('messageCreate', async (msg) => {
     if(msg.content === '!cmdreset' && msg.guild) {
         msg.guild.commands.set(commands);
         msg.guild.commands.set([]);
-        msg.reply('재설정 완료')
-    }
-
-    if(msg.content.startsWith('!playdur ')) {
-        
-        const resource = createAudioResource(msg.content.slice('!playdur '.length));
-        msg.reply(`dur ${resource.playbackDuration}\n` + 
-            `readable len ${resource.playStream.readableLength}`);
+        msg.reply('재설정 완료');
     }
 
     if(msg.member && !msg.member.user.bot && voiceConn) {

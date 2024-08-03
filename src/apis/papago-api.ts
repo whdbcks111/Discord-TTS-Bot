@@ -47,6 +47,7 @@ const SPEACKER_MAP: { [key: string]: string } = {
 type MacroList = ({ regex: string, replaceValue: string, lang?: string })[];
 
 const MACRO_LIST: MacroList = JSON.parse(readFileSync(path.join(__dirname, '../../data/macro.json')).toString());
+const hmacSecretCache: { value: string | null, expirationDate: number } = { value: null, expirationDate: 0 };
 
 export const languageCodes: [string, string][] = [
     ['auto', '자동'], 
@@ -75,15 +76,44 @@ function remap(x: number, from: number, to: number) {
 }
 
 async function getAutorization(url: string, timestamp: number) {
-    const hmacSecretCode = await axios.get(URL_SECRET);
-    
-    const secret = String(hmacSecretCode.data).split('Authorization:')[1].split('HmacMD5(')[1].split(/, ?"/)[1].split('"')[0];
+
+    /*
+    if(Date.now() > hmacSecretCache.expirationDate) {
+        const hmacSecretHTML = await (axios.get(URL_SECRET).catch(_ => null));
+        const parsedSecret = hmacSecretHTML ? 
+            String(hmacSecretHTML.data)
+                .split('Authorization:')[1]
+                .split('HmacMD5(')[1]
+                .split(/, ?"/)[1]
+                .split('"')[0] 
+            : null;
+
+        if(parsedSecret !== null) hmacSecretCache.value = parsedSecret;
+    }
+
+
     const uuid = randomUUID();
-    const hmac = createHmac('md5', secret)
+    const hmac = createHmac('md5', hmacSecretCache.value ?? '')
         .update(`${uuid}\n${url}\n${timestamp}`)
         .digest('base64');
 
-    return `PPG ${uuid}:${hmac}`;
+    return `PPG ${uuid}:${hmac}`;*/
+
+    const mainUrl =
+      'https://papago.naver.com/main' +
+      (await (await fetch('https://papago.naver.com')).text())
+        .split(`<script type="text/javascript" src="/main`)[1]
+        .split(`"`)[0];
+    const secretData = await (await fetch(mainUrl)).text();
+    const uuid = randomUUID();
+    const secret = secretData
+      .split(`p.a.HmacMD5(t+"\\n"+e.split("?")[0]+"\\n"+n,"`)[1]
+      .split('"')[0];
+    const hmac = createHmac('md5', secret);
+    const hash = hmac
+      .update(`${uuid}\n${url.split('?')[0]}\n${timestamp}`)
+      .digest('base64');
+    return `PPG ${uuid}:${hash}`;
 }
 
 export async function detectLanguage(query: string) {
@@ -150,6 +180,6 @@ export async function createTTS(text: string, lang: string = 'auto', gender: Gen
             'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
         },
         timeout: 5000
-    }).catch(_ => ({ data: { id: '' } }))).data;
+    }).catch(_ => ({ data: { id: 'err' } }))).data;
     return URL_TTS + data.id;
 }

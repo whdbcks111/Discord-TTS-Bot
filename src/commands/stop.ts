@@ -1,20 +1,20 @@
-import { getVoiceConnection } from '@discordjs/voice';
-import { SlashCommand } from '../types/slashCommand';
 import { Colors, EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
-import { ttsConnectionInfo } from '../core';
+import { initGuildConnectionInfo, ttsConnectionInfo } from '../core';
+import { SlashCommand } from '../types/slashCommand';
+import { getVoiceConnection, joinVoiceChannel } from '@discordjs/voice';
 
-export const leaveCommand: SlashCommand = {
-    name: '퇴장',
-    description: '봇이 음성 채널에서 퇴장합니다.',
+export const stopCommand: SlashCommand = {
+    name: '정지',
+    description: '봇이 읽고 있던 TTS 메시지를 종료합니다.',
     options:[
 
     ],
     execute: async (_, interaction) => {
-        
-        const conn = getVoiceConnection(interaction.guildId ?? '');if(!interaction.guild) return;
+        if(!interaction.guild) return;
         if(!(interaction.member instanceof GuildMember)) return;
         
         const voiceChannel = interaction.member.voice.channel;
+        const conn = getVoiceConnection(interaction.guildId ?? '');
 
         if(!(interaction.channel instanceof TextChannel)) {
             await interaction.followUp({
@@ -51,24 +51,22 @@ export const leaveCommand: SlashCommand = {
             return;
         }
 
-        if(!conn) {
+        if(info.audioPlayer === null) {
             await interaction.followUp({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription(`**입장한 음성 채널이 없습니다.**`)
+                        .setDescription(`**:mute: 봇이 음성 채팅을 출력하고 있지 않습니다.**`)
                         .setColor(Colors.Red)
                 ]
             });
             return;
         }
 
-        conn.disconnect();
-        info.ttsURLQueue = [];
-
+        info.audioPlayer.stop();
         await interaction.followUp({
             embeds: [
                 new EmbedBuilder()
-                    .setDescription(`**:mute: 음성 채널에서 퇴장합니다.**`)
+                    .setDescription(`**읽고 있던 메시지를 종료합니다.**`)
                     .setColor(Colors.Aqua)
             ]
         });

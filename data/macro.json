@@ -12,10 +12,6 @@
         "replaceValue": "오케이"
     },
     {
-        "regex": "ㅇㄱㅇ",
-        "replaceValue": "오게이"
-    },
-    {
         "regex": "ㅇㅋ",
         "replaceValue": "오키"
     },
@@ -85,6 +81,10 @@
         "replaceValue": "아하!"
     },
     {
+        "regex": "ㅇㅈㄹ",
+        "replaceValue": "이지랄"
+    },
+    {
         "regex": "ㅇㅈ",
         "replaceValue": "인정"
     },
@@ -131,10 +131,6 @@
     {
         "regex": "ㅄ|ㅂㅅ",
         "replaceValue": "병신"
-    },
-    {
-        "regex": "ㅇㅈㄹ",
-        "replaceValue": "이지랄"
     },
     {
         "regex": "ㅈㄹ",
@@ -227,5 +223,57 @@
     {
         "regex": "ㅎ",
         "replaceValue": "히읗"
+    },
+    {
+        "regex": "ㅛ",
+        "replaceValue": "요"
+    },
+    {
+        "regex": "ㅕ",
+        "replaceValue": "여"
+    },
+    {
+        "regex": "ㅑ",
+        "replaceValue": "야"
+    },
+    {
+        "regex": "ㅐ",
+        "replaceValue": "애"
+    },
+    {
+        "regex": "ㅒ",
+        "replaceValue": "얘"
+    },
+    {
+        "regex": "ㅔ",
+        "replaceValue": "에"
+    },
+    {
+        "regex": "ㅖ",
+        "replaceValue": "예"
+    },
+    {
+        "regex": "ㅓ",
+        "replaceValue": "어"
+    },
+    {
+        "regex": "ㅏ",
+        "replaceValue": "아"
+    },
+    {
+        "regex": "ㅣ",
+        "replaceValue": "이"
+    },
+    {
+        "regex": "ㅠ",
+        "replaceValue": "유"
+    },
+    {
+        "regex": "ㅜ",
+        "replaceValue": "우"
+    },
+    {
+        "regex": "ㅡ",
+        "replaceValue": "으"
     }
 ]

@@ -4,6 +4,7 @@ import { mkdir, readFile, stat, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { Gender, createTTS, languageCodes } from './apis/papago-api';
 import { AudioPlayerStatus, VoiceConnection, createAudioPlayer, createAudioResource } from '@discordjs/voice';
+import * as emoji from 'node-emoji';
 
 export const ttsCache: TTSCache = {};
 export const ttsConnectionInfo: TTSConnectionMap = {};
@@ -13,7 +14,8 @@ export async function initGuildConnectionInfo(guildId: string) {
         textChannelId: null,
         voiceChannelId: null,
         ttsURLQueue: [],
-        settings: await loadTTSSettings(guildId)
+        settings: await loadTTSSettings(guildId),
+        audioPlayer: null
     };
 }
 
@@ -85,7 +87,7 @@ export async function getTTS(text: string, langCode: string, gender: Gender, pit
     if(cacheKey in ttsCache) {
         let cached = ttsCache[cacheKey];
 
-        if(Date.now() - cached.createdAt > 1000 * 60 * 60 * 24) {
+        if(Date.now() - cached.createdAt > 1000 * 60 * 60 * 24 * 7) {
             delete ttsCache[cacheKey];
         }
         else {
@@ -104,8 +106,13 @@ export async function getTTS(text: string, langCode: string, gender: Gender, pit
 
 export async function enqueueTTS(text: string, voiceConn: VoiceConnection, info: TTSConnection, userSetting: TTSUserSettings) {
     const linkPattern = /(https?:\/\/[^ ]+)/g;
+    const codeBlockPattern = /```[a-zA-Z]+\n[^]+```/g;
+
     let langCode = userSetting.language;
-    let content = text.replace(linkPattern, 'Link');
+    let content = text.replace(linkPattern, 'Link').replace(codeBlockPattern, ' Code Block ').replace(':', ' ');
+    
+    //content = Array.from(content).map(c => emoji.has(c) ? ` ${(emoji.find(c)?.key ?? '이모지')} ` : c).join('');
+
     let languageApplied = false;
     for(let codes of languageCodes) {
         for(let code of codes) {
@@ -133,6 +140,8 @@ export async function enqueueTTS(text: string, voiceConn: VoiceConnection, info:
         const resource = createAudioResource(info.ttsURLQueue[0]);
         const player = createAudioPlayer();
 
+        info.audioPlayer = player;
+
         player.play(resource);
         voiceConn.subscribe(player);
 
@@ -143,6 +152,9 @@ export async function enqueueTTS(text: string, voiceConn: VoiceConnection, info:
                 if(info.ttsURLQueue.length > 0) {
                     const next = createAudioResource(info.ttsURLQueue[0] ?? '');
                     player.play(next);
+                }
+                else {
+                    info.audioPlayer = null;
                 }
             }
         });

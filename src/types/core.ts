@@ -1,3 +1,4 @@
+import { AudioPlayer } from "@discordjs/voice"
 import { Gender } from "../apis/papago-api"
 
 export type TTSCache = {
@@ -17,7 +18,8 @@ export type TTSConnection = {
     textChannelId: string | null,
     voiceChannelId: string | null,
     ttsURLQueue: string[],
-    settings: TTSSettings
+    settings: TTSSettings,
+    audioPlayer: AudioPlayer | null
 };
 
 export type TTSUserSettings = {
