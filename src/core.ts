@@ -145,6 +145,10 @@ export async function enqueueTTS(text: string, voiceConn: VoiceConnection, info:
         player.play(resource);
         voiceConn.subscribe(player);
 
+        player.on('error', error => {
+            console.error('TTS 오디오 재생 오류:', error);
+        });
+
         player.on('stateChange', (oldState, newState) => {
             if(newState.status !== AudioPlayerStatus.Playing && 
                 newState.status !== AudioPlayerStatus.Buffering) {

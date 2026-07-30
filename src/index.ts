@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import { Client, GatewayIntentBits } from 'discord.js'
 import commands from './commands'
-import { VoiceConnectionStatus, createAudioResource, getVoiceConnection } from '@discordjs/voice';
+import { getVoiceConnection } from '@discordjs/voice';
 import { createDefaultTTSUserSettings, enqueueTTS, saveAllTTSSettings, ttsConnectionInfo } from './core';
 
 dotenv.config();
@@ -52,13 +52,15 @@ client.on('messageCreate', async (msg) => {
                 info.settings.userSettings[msg.member.user.id] = createDefaultTTSUserSettings(info.settings);
             }
             const userSetting = info.settings.userSettings[msg.member.user.id];
-            enqueueTTS(msg.cleanContent, voiceConn, info, userSetting);
+            void enqueueTTS(msg.cleanContent, voiceConn, info, userSetting).catch(error => {
+                console.error('TTS 메시지 처리 오류:', error);
+            });
         }
     }
 });
 
 client.on('interactionCreate', async (interaction) => {
-    if(interaction.isCommand()) {
+    if(interaction.isChatInputCommand()) {
         const currentCommand = commands.find(({name}) => name === interaction.commandName);
 
         if(currentCommand) {

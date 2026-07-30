@@ -1,29 +1,19 @@
-import { createHmac, randomUUID } from 'crypto';
 import axios from 'axios';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { calculate } from './calculator';
 
-const USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/11.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
-]
+const PAPAGO_ORIGIN = 'https://papago.naver.com';
+const URL_MAKE_ID = `${PAPAGO_ORIGIN}/api/tts/makeID`;
+const URL_TTS = `${PAPAGO_ORIGIN}/api/tts/`;
+const URL_DETECT_LANG = `${PAPAGO_ORIGIN}/api/langs/dect`;
+const REQUEST_TIMEOUT = 10_000;
+const MAX_TTS_TEXT_LENGTH = 5_000;
+const FORM_HEADERS = {
+    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+};
 
-const URL_SECRET = 'https://papago.naver.com/main.6b997394aeac2d5eb831.chunk.js';
-const URL_MAKE_ID = 'https://papago.naver.com/apis/tts/makeID/';
-const URL_TTS = 'https://papago.naver.com/apis/tts/';
-const URL_DETECT_LANG = 'https://papago.naver.com/apis/langs/dect/';
-
-const SPEACKER_MAP: { [key: string]: string } = {
+const SPEAKER_MAP: { [key: string]: string } = {
     'ko_male': 'jinho',
     'ko_female': 'kyuri',
     'en_male': 'matt',
@@ -47,7 +37,6 @@ const SPEACKER_MAP: { [key: string]: string } = {
 type MacroList = ({ regex: string, replaceValue: string, lang?: string })[];
 
 const MACRO_LIST: MacroList = JSON.parse(readFileSync(path.join(__dirname, '../../data/macro.json')).toString());
-const hmacSecretCache: { value: string | null, expirationDate: number } = { value: null, expirationDate: 0 };
 
 export const languageCodes: [string, string][] = [
     ['auto', '자동'], 
@@ -75,62 +64,44 @@ function remap(x: number, from: number, to: number) {
     return from + (to - from) * x;
 }
 
-async function getAutorization(url: string, timestamp: number) {
+function getErrorDescription(error: unknown) {
+    if(axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const responseData = error.response?.data;
+        const detail = typeof responseData === 'string'
+            ? responseData.slice(0, 200)
+            : JSON.stringify(responseData)?.slice(0, 200);
 
-    /*
-    if(Date.now() > hmacSecretCache.expirationDate) {
-        const hmacSecretHTML = await (axios.get(URL_SECRET).catch(_ => null));
-        const parsedSecret = hmacSecretHTML ? 
-            String(hmacSecretHTML.data)
-                .split('Authorization:')[1]
-                .split('HmacMD5(')[1]
-                .split(/, ?"/)[1]
-                .split('"')[0] 
-            : null;
-
-        if(parsedSecret !== null) hmacSecretCache.value = parsedSecret;
+        return [status && `HTTP ${status}`, detail, error.message]
+            .filter(Boolean)
+            .join(' - ');
     }
 
-
-    const uuid = randomUUID();
-    const hmac = createHmac('md5', hmacSecretCache.value ?? '')
-        .update(`${uuid}\n${url}\n${timestamp}`)
-        .digest('base64');
-
-    return `PPG ${uuid}:${hmac}`;*/
-
-    const mainUrl =
-      'https://papago.naver.com/main' +
-      (await (await fetch('https://papago.naver.com')).text())
-        .split(`<script type="text/javascript" src="/main`)[1]
-        .split(`"`)[0];
-    const secretData = await (await fetch(mainUrl)).text();
-    const uuid = randomUUID();
-    const secret = secretData
-      .split(`p.a.HmacMD5(t+"\\n"+e.split("?")[0]+"\\n"+n,"`)[1]
-      .split('"')[0];
-    const hmac = createHmac('md5', secret);
-    const hash = hmac
-      .update(`${uuid}\n${url.split('?')[0]}\n${timestamp}`)
-      .digest('base64');
-    return `PPG ${uuid}:${hash}`;
+    return error instanceof Error ? error.message : String(error);
 }
 
 export async function detectLanguage(query: string) {
-    const timestamp = Date.now();
-    const authorization = await getAutorization(URL_DETECT_LANG, timestamp);
-    
-    const data = (await axios.post(URL_DETECT_LANG, new URLSearchParams({ query }), { 
-        headers: {
-            'Authorization': authorization,
-            'Timestamp': timestamp,
-            'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
-        } 
-    }).catch(_ => ({ data: '' }))).data;
+    let data: { langCode?: unknown } = {};
+
+    try {
+        const response = await axios.post(
+            URL_DETECT_LANG,
+            new URLSearchParams({ query }),
+            {
+                headers: FORM_HEADERS,
+                timeout: REQUEST_TIMEOUT
+            }
+        );
+        data = response.data;
+    }
+    catch {
+        // The lightweight local fallback below keeps TTS usable if detection fails.
+    }
 
     let langCode = String(data.langCode);
     if(!languageCodes.some(code => code[0] === langCode)) {
-        langCode = (query.match(/[가-힣ㄱ-ㅎㅏ-ㅣ]/g)?.length ?? 0) >= (query.match(/[a-zA-Z]/g)?.length ?? 0) ? 'ko' : 'es';
+        langCode = (query.match(/[가-힣ㄱ-ㅎㅏ-ㅣ]/g)?.length ?? 0) >=
+            (query.match(/[a-zA-Z]/g)?.length ?? 0) ? 'ko' : 'en';
     }
 
     return langCode;
@@ -156,30 +127,34 @@ export function convertTTSMessage(msg: string, langCode: string) {
 }
 
 export async function createTTS(text: string, lang: string = 'auto', gender: Gender = 'female', alpha = 1, pitch = 1, speed = 1) {
-    const timestamp = Date.now();
-    const authorization = await getAutorization(URL_MAKE_ID, timestamp);
-
     if(languageCodes.every(codes => codes[0] !== lang)) lang = 'auto';
     if(lang == 'auto') lang = await detectLanguage(text);
 
-    text = convertTTSMessage(text, lang);
+    text = convertTTSMessage(text, lang).slice(0, MAX_TTS_TEXT_LENGTH);
 
     const params = new URLSearchParams({
         alpha: remap(clamp(alpha, 0, 2) / 2, 5, -5).toFixed(0),
         pitch: remap(clamp(pitch, 0, 2) / 2, 5, -5).toFixed(0),
         speed: remap(clamp(speed, 0, 2) / 2, 5, -5).toFixed(0),
-        speaker: SPEACKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ?? 
-            SPEACKER_MAP['ko_' + gender.toLowerCase()],
+        speaker: SPEAKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ??
+            SPEAKER_MAP['ko_' + gender.toLowerCase()],
         text
     });
 
-    const data = (await axios.post(URL_MAKE_ID, params, { 
-        headers: {
-            'Authorization': authorization,
-            'Timestamp': timestamp,
-            'User-Agent': USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
-        },
-        timeout: 5000
-    }).catch(_ => ({ data: { id: 'err' } }))).data;
-    return URL_TTS + data.id;
+    try {
+        const response = await axios.post<{ id?: unknown }>(URL_MAKE_ID, params, {
+            headers: FORM_HEADERS,
+            timeout: REQUEST_TIMEOUT
+        });
+        const id = response.data?.id;
+
+        if(typeof id !== 'string' || id.length === 0) {
+            throw new Error('응답에 음성 ID가 없습니다.');
+        }
+
+        return URL_TTS + encodeURIComponent(id);
+    }
+    catch(error) {
+        throw new Error(`Papago TTS 요청 실패: ${getErrorDescription(error)}`);
+    }
 }

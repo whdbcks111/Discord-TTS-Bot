@@ -3,22 +3,25 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test -r ts-node/register src/apis/*.test.ts",
     "start": "nodemon --signal SIGINT --watch 'src/**/*.ts' --exec \"ts-node\" src/index.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
-    "@discordjs/voice": "^0.16.1",
+    "@discordjs/voice": "^0.19.2",
     "@types/axios": "^0.14.0",
     "@types/crypto-js": "^4.2.2",
     "axios": "^1.6.7",
     "body-parser": "^1.20.2",
     "crypto": "^1.0.1",
     "crypto-ts": "^1.0.2",
-    "discord.js": "^14.14.1",
+    "discord.js": "^14.27.0",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
     "ffmpeg-static": "^5.2.0",
