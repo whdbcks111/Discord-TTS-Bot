@@ -62,8 +62,10 @@ export const leaveCommand: SlashCommand = {
             return;
         }
 
-        conn.disconnect();
         info.ttsURLQueue = [];
+        info.audioPlayer?.stop(true);
+        info.audioPlayer = null;
+        conn.disconnect();
 
         await interaction.followUp({
             embeds: [

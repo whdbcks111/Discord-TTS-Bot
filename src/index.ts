@@ -28,6 +28,12 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     if(oldState.channel && oldState.channel.members.size === 1 && 
         oldState.channel.members.first()!!.user.id === client.user?.id) {
         const voiceConn = getVoiceConnection(oldState.guild.id);
+        const info = ttsConnectionInfo[oldState.guild.id];
+        if(info) {
+            info.ttsURLQueue = [];
+            info.audioPlayer?.stop(true);
+            info.audioPlayer = null;
+        }
         if(voiceConn) voiceConn.disconnect();
     }
 });
