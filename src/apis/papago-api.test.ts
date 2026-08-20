@@ -24,6 +24,8 @@ test('createTTS uses the current Papago endpoint and returns an audio URL', asyn
     assert.equal(requestUrl, 'https://papago.naver.com/api/tts/makeID');
     assert.equal(requestBody?.get('speaker'), 'kyuri');
     assert.equal(requestBody?.get('text'), '안녕하세요');
+    assert.equal(requestBody?.get('pitch'), '0');
+    assert.equal(requestBody?.get('speed'), '0');
     assert.equal(result, 'https://papago.naver.com/api/tts/voice%2Fid');
 });
 

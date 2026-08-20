@@ -53,17 +53,6 @@ export const languageCodes: [string, string][] = [
 
 export type Gender = 'male' | 'female';
 
-function clamp(x: number, min: number, max: number) {
-    if(min > max) return clamp(x, max, min);
-    if(x > max) x = max;
-    if(x < min) x = min;
-    return x;
-}
-
-function remap(x: number, from: number, to: number) {
-    return from + (to - from) * x;
-}
-
 function getErrorDescription(error: unknown) {
     if(axios.isAxiosError(error)) {
         const status = error.response?.status;
@@ -126,16 +115,16 @@ export function convertTTSMessage(msg: string, langCode: string) {
     return msg;
 }
 
-export async function createTTS(text: string, lang: string = 'auto', gender: Gender = 'female', alpha = 1, pitch = 1, speed = 1) {
+export async function createTTS(text: string, lang: string = 'auto', gender: Gender = 'female') {
     if(languageCodes.every(codes => codes[0] !== lang)) lang = 'auto';
     if(lang == 'auto') lang = await detectLanguage(text);
 
     text = convertTTSMessage(text, lang).slice(0, MAX_TTS_TEXT_LENGTH);
 
     const params = new URLSearchParams({
-        alpha: remap(clamp(alpha, 0, 2) / 2, 5, -5).toFixed(0),
-        pitch: remap(clamp(pitch, 0, 2) / 2, 5, -5).toFixed(0),
-        speed: remap(clamp(speed, 0, 2) / 2, 5, -5).toFixed(0),
+        alpha: '0',
+        pitch: '0',
+        speed: '0',
         speaker: SPEAKER_MAP[`${lang.toLowerCase()}_${gender.toLowerCase()}`] ??
             SPEAKER_MAP['ko_' + gender.toLowerCase()],
         text

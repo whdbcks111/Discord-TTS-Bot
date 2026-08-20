@@ -3,7 +3,8 @@ import path from 'path';
 import { mkdir, readFile, stat, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { Gender, createTTS, languageCodes } from './apis/papago-api';
-import { AudioPlayerStatus, VoiceConnection, createAudioPlayer, createAudioResource } from '@discordjs/voice';
+import { AudioPlayerStatus, VoiceConnection, createAudioPlayer } from '@discordjs/voice';
+import { createTransformedAudioResource, isValidAudioMultiplier } from './audio/transform';
 import * as emoji from 'node-emoji';
 
 export const ttsCache: TTSCache = {};
@@ -81,8 +82,8 @@ export async function saveAllTTSSettings() {
     await Promise.all(promises);
 }
 
-export async function getTTS(text: string, langCode: string, gender: Gender, pitch: number, speed: number) {
-    const cacheKey = `${langCode}/${gender}/${pitch.toFixed(1)}/${speed.toFixed(1)}/${text}`;
+export async function getTTS(text: string, langCode: string, gender: Gender) {
+    const cacheKey = `${langCode}/${gender}/${text}`;
 
     if(cacheKey in ttsCache) {
         let cached = ttsCache[cacheKey];
@@ -95,7 +96,7 @@ export async function getTTS(text: string, langCode: string, gender: Gender, pit
         }
     }
 
-    let ttsURL = await createTTS(text, langCode, gender, 1, pitch, speed);
+    let ttsURL = await createTTS(text, langCode, gender);
     ttsCache[cacheKey] = {
         url: ttsURL,
         createdAt: Date.now()
@@ -128,39 +129,46 @@ export async function enqueueTTS(text: string, voiceConn: VoiceConnection, info:
     }
 
     const gender = userSetting.gender;
-    const pitch = userSetting.pitch;
-    const speed = userSetting.speed;
+    const pitch = isValidAudioMultiplier(userSetting.pitch) ? userSetting.pitch : 1;
+    const speed = isValidAudioMultiplier(userSetting.speed) ? userSetting.speed : 1;
 
-    const url = await getTTS(content, langCode, gender, pitch, speed);
+    const url = await getTTS(content, langCode, gender);
     console.log(`TTS created: ${content}, ${url}`);
 
-    info.ttsURLQueue.push(url);
+    info.ttsURLQueue.push({ url, pitch, speed });
 
     if(info.ttsURLQueue.length === 1) {
-        const resource = createAudioResource(info.ttsURLQueue[0]);
         const player = createAudioPlayer();
 
         info.audioPlayer = player;
 
-        player.play(resource);
-        voiceConn.subscribe(player);
+        const playNext = () => {
+            const next = info.ttsURLQueue[0];
+            if(!next) {
+                info.audioPlayer = null;
+                return;
+            }
+
+            try {
+                player.play(createTransformedAudioResource(next.url, next.pitch, next.speed));
+            }
+            catch(error) {
+                console.error('TTS 오디오 변환 준비 오류:', error);
+                info.ttsURLQueue.shift();
+                playNext();
+            }
+        };
 
         player.on('error', error => {
             console.error('TTS 오디오 재생 오류:', error);
         });
 
-        player.on('stateChange', (oldState, newState) => {
-            if(newState.status !== AudioPlayerStatus.Playing && 
-                newState.status !== AudioPlayerStatus.Buffering) {
-                info.ttsURLQueue.shift();
-                if(info.ttsURLQueue.length > 0) {
-                    const next = createAudioResource(info.ttsURLQueue[0] ?? '');
-                    player.play(next);
-                }
-                else {
-                    info.audioPlayer = null;
-                }
-            }
+        player.on(AudioPlayerStatus.Idle, () => {
+            info.ttsURLQueue.shift();
+            playNext();
         });
+
+        voiceConn.subscribe(player);
+        playNext();
     }
 }

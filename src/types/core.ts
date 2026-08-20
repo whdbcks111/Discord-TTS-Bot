@@ -17,10 +17,16 @@ export type TTSConnectionMap = {
 export type TTSConnection = {
     textChannelId: string | null,
     voiceChannelId: string | null,
-    ttsURLQueue: string[],
+    ttsURLQueue: TTSQueueItem[],
     settings: TTSSettings,
     audioPlayer: AudioPlayer | null
 };
+
+export type TTSQueueItem = {
+    url: string,
+    pitch: number,
+    speed: number
+}
 
 export type TTSUserSettings = {
     gender: Gender,

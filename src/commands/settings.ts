@@ -223,7 +223,7 @@ export const setPitchCommand: SlashCommand = {
         {
             required: true,
             name: '피치',
-            description: `TTS의 피치를 입력한 값으로 설정합니다. (0 ~ 2)`,
+            description: `TTS 피치 배율을 설정합니다. (0보다 큰 숫자, 1은 원본)`,
             type: ApplicationCommandOptionType.Number
         }
     ],
@@ -239,11 +239,11 @@ export const setPitchCommand: SlashCommand = {
 
         const pitch = interaction.options.get('피치')!!.value as number;
         
-        if(pitch < 0 || pitch > 2) {
+        if(!Number.isFinite(pitch) || pitch <= 0) {
             await interaction.followUp({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription(`**피치 범위를 초과했습니다.** (0 ~ 2)`)
+                        .setDescription(`**피치는 0보다 큰 숫자여야 합니다.** (1은 원본 피치)`)
                         .setColor(Colors.Red)
                 ]
             });
@@ -269,7 +269,7 @@ export const setSpeedCommand: SlashCommand = {
         {
             required: true,
             name: '속도',
-            description: `TTS의 속도를 입력한 값으로 설정합니다. (0 ~ 2)`,
+            description: `TTS 속도 배율을 설정합니다. (0보다 큰 숫자, 1은 원본)`,
             type: ApplicationCommandOptionType.Number
         }
     ],
@@ -285,11 +285,11 @@ export const setSpeedCommand: SlashCommand = {
 
         const speed = interaction.options.get('속도')!!.value as number;
         
-        if(speed < 0 || speed > 2) {
+        if(!Number.isFinite(speed) || speed <= 0) {
             await interaction.followUp({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription(`**유효 속도 범위를 초과했습니다.** (0 ~ 2)`)
+                        .setDescription(`**속도는 0보다 큰 숫자여야 합니다.** (1은 원본 속도)`)
                         .setColor(Colors.Red)
                 ]
             });
