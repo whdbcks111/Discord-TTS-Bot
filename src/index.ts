@@ -3,6 +3,7 @@ import { Client, GatewayIntentBits } from 'discord.js'
 import commands from './commands'
 import { getVoiceConnection } from '@discordjs/voice';
 import { createDefaultTTSUserSettings, enqueueTTS, saveAllTTSSettings, ttsConnectionInfo } from './core';
+import { shouldPlayTTSMessage } from './tts-message';
 
 dotenv.config();
 
@@ -52,8 +53,14 @@ client.on('messageCreate', async (msg) => {
         if(!info) {
             voiceConn.disconnect();
         }
-        else if((msg.channelId === info.textChannelId || info.settings.privateChannelIds.includes(msg.channelId)) && 
-            msg.member.voice.channelId === info.voiceChannelId) {
+        else if(shouldPlayTTSMessage({
+            messageChannelId: msg.channelId,
+            textChannelId: info.textChannelId,
+            privateChannelIds: info.settings.privateChannelIds,
+            memberVoiceChannelId: msg.member.voice.channelId,
+            ttsVoiceChannelId: info.voiceChannelId,
+            content: msg.cleanContent
+        })) {
             if(!(msg.member.user.id in info.settings.userSettings)) {
                 info.settings.userSettings[msg.member.user.id] = createDefaultTTSUserSettings(info.settings);
             }
